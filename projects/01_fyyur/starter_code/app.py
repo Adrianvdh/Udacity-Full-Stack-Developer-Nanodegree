@@ -11,7 +11,7 @@ from sqlalchemy import func
 
 from forms import *
 
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, Response, flash, redirect, url_for, abort, jsonify
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -84,11 +84,9 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.Boolean())
     seeking_description = db.Column(db.String(120))
 
+    # TODO DONE: implement any missing fields, as a database migration using Flask-Migrate
 
-
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+# TODO DONE Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -275,9 +273,9 @@ def create_venue_submission():
       )
       db.session.add(venue)
       db.session.commit()
-      flash('Venue ' + request.form['name'] + ' was successfully listed!', 'alert-primary')
+      flash('The venue "' + request.form['name'] + '", was successfully listed!', 'alert-primary')
     except Exception as e:
-      flash('An error occurred when saving the venue. Venue ' + form.data.get('name') + ' could not be listed.',
+      flash('An error occurred when saving the venue. The venue "' + form.data.get('name') + '", could not be listed.',
             'alert-danger')
       db.session.rollback()
     finally:
@@ -291,12 +289,28 @@ def create_venue_submission():
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
-  # TODO: Complete this endpoint for taking a venue_id, and using
+  # TODO DONE: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
 
-  # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
+  # BONUS CHALLENGE DONE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
-  return None
+  # See: show_venue.html
+
+  error = False
+  try:
+    venue = Venue.query.get(venue_id)
+    db.session.delete(venue)
+    db.session.commit()
+    flash('The venue "' + venue.name + '", was successfully deleted!', 'alert-primary')
+  except:
+    db.session.rollback()
+  finally:
+    db.session.close()
+
+  if error:
+    abort(500)
+  else:
+    return jsonify({'success': True})
 
 #  Artists
 #  ----------------------------------------------------------------

@@ -74,6 +74,30 @@
 		{% endfor %}
 	</div>
 </section>
+<section>
+  <button data-id="{{ venue.id }}" id="delete-venue" class="btn btn-danger">Delete Venue</button>
+  <div style="margin-top: 12px;" id="delete-venue-error" class="hidden alert alert-danger" role="alert">
+    Failed to delete this venue!
+  </div>
+</section>
 
+<script>
+  document.addEventListener('DOMContentLoaded', (event) => {
+      var deleteButton = document.getElementById('delete-venue');
+      deleteButton.onclick = function(e) {
+        const venueId = e.target.getAttribute('data-id');
+
+        fetch('/venues/' + venueId, {
+            method: 'DELETE'
+        })
+        .then(function() {
+            window.location.href = '/';
+        })
+        .catch(function() {
+            document.getElementById('delete-venue-error').classList.add('show');
+        })
+      }
+  })
+</script>
 {% endblock %}
 
