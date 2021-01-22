@@ -284,6 +284,7 @@ def create_venue_submission():
     # TODO DONE: on unsuccessful db insert, flash an error instead.
     flash('An error occurred when submitting this form. Venue ' + form.data.get('name') + ' could not be listed.',
           'alert-danger')
+    return render_template('forms/new_venue.html', form=form)
 
   return render_template('pages/home.html')
 
@@ -427,6 +428,7 @@ def edit_artist_submission(artist_id):
   else:
     flash('An error occurred when submitting this form. Artist ' + form.data.get('name') + ' could not be updated.',
           'alert-danger')
+    return render_template('forms/new_show.html', form=form)
 
   return redirect(url_for('show_artist', artist_id=artist_id))
 
@@ -511,6 +513,7 @@ def create_artist_submission():
     # TODO DONE: on unsuccessful db insert, flash an error instead.
     flash('An error occurred when submitting this form. Artist ' + form.data.get('name') + ' could not be listed.',
           'alert-danger')
+    return render_template('forms/new_artist.html', form=form)
 
   return render_template('pages/home.html')
 
