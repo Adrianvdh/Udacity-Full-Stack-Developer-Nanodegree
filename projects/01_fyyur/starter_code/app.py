@@ -2,7 +2,6 @@
 # Imports
 #----------------------------------------------------------------------------#
 
-import json
 import dateutil.parser
 import babel
 import logging
@@ -11,11 +10,10 @@ from sqlalchemy import func
 
 from forms import *
 
-from flask import Flask, render_template, request, Response, flash, redirect, url_for, abort, jsonify
+from flask import Flask, render_template, request, flash, redirect, url_for, abort, jsonify
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_wtf import Form
 from logging import Formatter, FileHandler
 #----------------------------------------------------------------------------#
 # App Config.
@@ -232,6 +230,9 @@ def show_venue(venue_id):
     }
 
   venue = Venue.query.get(venue_id)
+  if not venue:
+    raise abort(404)
+
   response = {**vars(venue)}
 
   past_shows_q = query_past_or_upcoming_shows(venue.id, upcoming=False)
@@ -300,6 +301,9 @@ def delete_venue(venue_id):
   error = False
   try:
     venue = Venue.query.get(venue_id)
+    if not venue:
+      raise abort(404)
+
     db.session.delete(venue)
     db.session.commit()
     flash('The venue "' + venue.name + '", was successfully deleted!', 'alert-primary')
@@ -378,6 +382,9 @@ def show_artist(artist_id):
     }
 
   artist = Artist.query.get(artist_id)
+  if not artist:
+    raise abort(404)
+
   response = {**vars(artist)}
 
   past_shows_q = query_past_or_upcoming_shows(artist.id, upcoming=False)
@@ -395,6 +402,8 @@ def show_artist(artist_id):
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
   artist = Artist.query.get(artist_id)
+  if not artist:
+    raise abort(404)
 
   form = ArtistForm(obj=artist)
 
@@ -436,6 +445,8 @@ def edit_artist_submission(artist_id):
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
   venue = Venue.query.get(venue_id)
+  if not venue:
+    raise abort(404)
 
   form = VenueForm(obj=venue)
 
