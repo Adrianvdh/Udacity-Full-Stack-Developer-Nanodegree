@@ -13,11 +13,16 @@ migrate = Migrate(app, db)
 # Models.
 #----------------------------------------------------------------------------#
 
-Show = db.Table('Show',
-    db.Column('artist_id', db.Integer, db.ForeignKey('Artist.id'), primary_key=True),
-    db.Column('venue_id', db.Integer, db.ForeignKey('Venue.id'), primary_key=True),
-    db.Column('start_time', db.DateTime, nullable=False)
-)
+
+class Show(db.Model):
+    __tablename__ = 'Show'
+
+    artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), primary_key=True)
+    venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), primary_key=True)
+    start_time = db.Column(db.DateTime, nullable=False)
+
+    venue = db.relationship('Venue', back_populates='shows')
+    artist = db.relationship('Artist', back_populates='shows')
 
 
 class Venue(db.Model):
@@ -40,7 +45,7 @@ class Venue(db.Model):
     seeking_talent = db.Column(db.Boolean())
     seeking_description = db.Column(db.String(120))
 
-    venues = db.relationship('Artist', secondary=Show, backref=db.backref('venues', lazy='joined'))
+    shows = db.relationship('Show', back_populates='venue')
 
 
 class Artist(db.Model):
@@ -63,6 +68,9 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.Boolean())
     seeking_description = db.Column(db.String(120))
 
+    shows = db.relationship('Show', back_populates='artist')
+
+
     # TODO DONE: implement any missing fields, as a database migration using Flask-Migrate
 
 # TODO DONE Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
@@ -76,15 +84,15 @@ def upcoming_shows_for_venue(venue_id) -> int:
     """
     Count the number of upcoming shows for given venue.
     """
-    return db.session.query(func.count(Show.c.venue_id)) \
-        .filter(Show.c.venue_id == venue_id) \
-        .filter(Show.c.start_time > datetime.now()).scalar()
+    return db.session.query(func.count(Show.venue_id)) \
+        .filter(Show.venue_id == venue_id) \
+        .filter(Show.start_time > datetime.now()).scalar()
 
 
 def upcoming_shows_for_artist(artist_id):
     """
     Count the number of upcoming shows for given artist.
     """
-    return db.session.query(func.count(Show.c.artist_id)) \
-        .filter(Show.c.artist_id == artist_id) \
-        .filter(Show.c.start_time > datetime.now()).scalar()
+    return db.session.query(func.count(Show.artist_id)) \
+        .filter(Show.artist_id == artist_id) \
+        .filter(Show.start_time > datetime.now()).scalar()

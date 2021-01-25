@@ -93,16 +93,16 @@ def show_venue(venue_id):
             Artist.id.label('artist_id'),
             Artist.name.label('artist_name'),
             Artist.image_link.label('artist_image_link'),
-            Show.c.start_time.label('start_time'),
-        ).filter(Show.c.venue_id == venue_id) \
-            .filter(Show.c.artist_id == Artist.id)
+            Show.start_time.label('start_time'),
+        ).join(Artist) \
+         .filter(Show.venue_id == venue_id)
 
         if upcoming:
-            return q.filter(Show.c.start_time > datetime.now())
+            return q.filter(Show.start_time > datetime.now())
         else:
-            return q.filter(Show.c.start_time < datetime.now())
+            return q.filter(Show.start_time < datetime.now())
 
-    def create_shows_dict(show: Show) -> dict:
+    def create_shows_dict(show) -> dict:
         return {
             'artist_id': show.artist_id,
             'artist_name': show.artist_name,
@@ -245,16 +245,16 @@ def show_artist(artist_id):
             Venue.id.label('venue_id'),
             Venue.name.label('venue_name'),
             Venue.image_link.label('venue_image_link'),
-            Show.c.start_time.label('start_time'),
-        ).filter(Show.c.artist_id == artist_id) \
-            .filter(Show.c.venue_id == Venue.id)
+            Show.start_time.label('start_time'),
+        ).filter(Show.artist_id == artist_id) \
+            .filter(Show.venue_id == Venue.id)
 
         if upcoming:
-            return q.filter(Show.c.start_time > datetime.now())
+            return q.filter(Show.start_time > datetime.now())
         else:
-            return q.filter(Show.c.start_time < datetime.now())
+            return q.filter(Show.start_time < datetime.now())
 
-    def create_shows_dict(show: Show) -> dict:
+    def create_shows_dict(show) -> dict:
         return {
             'venue_id': show.venue_id,
             'venue_name': show.venue_name,
@@ -356,7 +356,6 @@ def edit_venue_submission(venue_id):
             db.session.commit()
             flash('Venue ' + form.data.get('name') + ' was successfully updated!', 'alert-primary')
         except Exception as e:
-            e.print_exc()
             db.session.rollback()
         finally:
             db.session.close()
@@ -435,9 +434,9 @@ def shows():
         Artist.id.label('artist_id'),
         Artist.name.label('artist_name'),
         Artist.image_link.label('artist_image_link'),
-        Show.c.start_time.label('start_time'),
-    ).filter(Show.c.venue_id == Venue.id) \
-        .filter(Show.c.artist_id == Artist.id).all()
+        Show.start_time.label('start_time'),
+    ).join(Venue) \
+     .filter(Show.artist_id == Artist.id).all()
 
     return render_template('pages/shows.html', shows=shows)
 
@@ -456,12 +455,12 @@ def create_show_submission():
 
     if form.validate_on_submit():
         try:
-            show = Show.insert().values(
+            show = Show(
                 artist_id=form.data.get('artist_id'),
                 venue_id=form.data.get('venue_id'),
                 start_time=form.data.get('start_time')
             )
-            db.engine.execute(show)
+            db.session.add(show)
             db.session.commit()
             flash('Show was successfully listed!')
         except Exception as e:
