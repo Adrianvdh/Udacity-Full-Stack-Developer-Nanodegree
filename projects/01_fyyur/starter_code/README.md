@@ -174,6 +174,7 @@ pip install -r requirements.txt
 export FLASK_APP=fyyur
 export FLASK_ENV=development # enables debug mode
 pip install -e .
+flask db upgrade
 flask run
 ```
 
