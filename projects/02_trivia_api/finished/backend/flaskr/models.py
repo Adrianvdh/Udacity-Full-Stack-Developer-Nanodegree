@@ -4,7 +4,9 @@ from flask_sqlalchemy import SQLAlchemy
 import json
 
 
-db = SQLAlchemy()
+db = SQLAlchemy(session_options={
+    'expire_on_commit': False
+})
 
 '''
 setup_db(app)
@@ -16,11 +18,23 @@ def setup_db(app):
     db.create_all()
     return db
 
-'''
-Question
+class BaseModel(db.Model):
+  __abstract__ = True
+  def insert(self):
+    db.session.add(self)
+    db.session.commit()
+  
+  def update(self):
+    db.session.commit()
+
+  def delete(self):
+    db.session.delete(self)
+    db.session.commit()
 
 '''
-class Question(db.Model):  
+Question
+'''
+class Question(BaseModel):  
   __tablename__ = 'questions'
 
   id = Column(Integer, primary_key=True)
@@ -35,17 +49,6 @@ class Question(db.Model):
     self.category = category
     self.difficulty = difficulty
 
-  def insert(self):
-    db.session.add(self)
-    db.session.commit()
-  
-  def update(self):
-    db.session.commit()
-
-  def delete(self):
-    db.session.delete(self)
-    db.session.commit()
-
   def format(self):
     return {
       'id': self.id,
@@ -59,7 +62,7 @@ class Question(db.Model):
 Category
 
 '''
-class Category(db.Model):  
+class Category(BaseModel):  
   __tablename__ = 'categories'
 
   id = Column(Integer, primary_key=True)
@@ -67,6 +70,9 @@ class Category(db.Model):
 
   def __init__(self, type):
     self.type = type
+  
+  def __repr__(self):
+    return self.type
 
   def format(self):
     return {

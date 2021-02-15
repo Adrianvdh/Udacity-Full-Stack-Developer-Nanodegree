@@ -8,6 +8,13 @@ from .models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
+def paginated_objects(request, objects_list):
+    page = request.args.get('page', default=1, type=int)
+    start = (page - 1) * QUESTIONS_PER_PAGE
+    end = start + QUESTIONS_PER_PAGE
+    return objects_list[start:end]
+
+
 def create_app(config='flaskr.config'):
     # create and configure the app
     app = Flask(__name__)
@@ -15,11 +22,11 @@ def create_app(config='flaskr.config'):
     db = setup_db(app)
 
     '''
-    @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
+    @TODO DONE: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
     '''
     CORS(app, resources={r"/api/*": {"origins": "*"}})
     '''
-    @TODO: Use the after_request decorator to set Access-Control-Allow
+    @TODO DONE: Use the after_request decorator to set Access-Control-Allow
     '''
       # CORS Headers 
     @app.after_request
@@ -33,14 +40,24 @@ def create_app(config='flaskr.config'):
         return 'Hello world'
     
     '''
-    @TODO: 
+    @TODO DONE: 
     Create an endpoint to handle GET requests 
     for all available categories.
     '''
+    @app.route('/categories')
+    def get_categories():
+        categories = Category.query.order_by(Category.type).all()
 
+        return jsonify({
+            'categories': [
+                cat.type for cat in categories
+            ],
+            'total_categories': len(categories),
+            'success': True
+        }), 200
 
     '''
-    @TODO: 
+    @TODO DONE: 
     Create an endpoint to handle GET requests for questions, 
     including pagination (every 10 questions). 
     This endpoint should return a list of questions, 
@@ -51,17 +68,47 @@ def create_app(config='flaskr.config'):
     ten questions per page and pagination at the bottom of the screen for three pages.
     Clicking on the page numbers should update the questions. 
     '''
+    @app.route('/questions')
+    def get_questions():
+        questions = Question.query.order_by(Question.difficulty.desc()).all()
+        categories = Category.query.order_by(Category.type).all()
+        
+        questions_paginated = paginated_objects(request, questions)
+
+        return jsonify({
+            'questions': [
+                question.format() for question in questions_paginated
+            ],
+            'total_questions': len(questions),
+            'categories': [
+                cat.type for cat in categories
+            ],
+        }), 200
 
     '''
-    @TODO: 
+    @TODO DONE: 
     Create an endpoint to DELETE question using a question ID. 
 
     TEST: When you click the trash icon next to a question, the question will be removed.
     This removal will persist in the database and when you refresh the page. 
     '''
+    @app.route('/questions/<int:question_id>', methods=['DELETE'])
+    def delete_question(question_id):
+        question = Question.query.filter(Question.id == question_id).one_or_none()
+
+        if question is None:
+            abort(404)
+        
+        question.delete()
+        
+        return jsonify({
+            'success': True,
+            'deleted': question.id
+        }), 200
+
 
     '''
-    @TODO: 
+    @TODO DONE: 
     Create an endpoint to POST a new question, 
     which will require the question and answer text, 
     category, and difficulty score.
@@ -70,9 +117,51 @@ def create_app(config='flaskr.config'):
     the form will clear and the question will appear at the end of the last page
     of the questions list in the "List" tab.  
     '''
+    @app.route('/questions', methods=['POST'])
+    def create_question():
+        body = request.get_json()
+        
+        question = body.get('question', None)
+        answer = body.get('answer', None)
+        category = body.get('category', None)
+        difficulty = body.get('difficulty', None)
+        
+        errors = []
+        if not question:
+            errors.append({'question': 'Question field cannot be blank!'})
+        if not answer:
+            errors.append({'answer': 'Answer field cannot be blank!'})
+        if not category:
+            errors.append({'category': 'Category field cannot be blank!'})
+        if not difficulty:
+            errors.append({'difficulty': 'Difficulty field cannot be blank!'})
+        
+        if len(errors) > 0:
+            return jsonify({
+                'errors': errors
+            }), 400
+        
+        try:
+            question = Question(
+                question=question,
+                answer=answer,
+                category=category,
+                difficulty=difficulty
+            )
+            question.insert()
+
+            return jsonify({
+                'id': question.id,
+                'question': question.question,
+                'answer': question.answer,
+                'category': str(question.category),
+                'difficulty': question.difficulty
+            }), 201
+        except:
+            abort(500)
 
     '''
-    @TODO: 
+    @TODO DONE: 
     Create a POST endpoint to get questions based on a search term. 
     It should return any questions for whom the search term 
     is a substring of the question. 
@@ -81,16 +170,49 @@ def create_app(config='flaskr.config'):
     only question that include that string within their question. 
     Try using the word "title" to start. 
     '''
+    @app.route('/questions/search', methods=['POST'])
+    def search_questions():
+        body = request.get_json()
+        if not 'searchTerm' in body:
+            abort(400)
+        
+        search_term = body.get('searchTerm')
+        questions = Question.query.filter(Question.question.ilike(f'%{search_term}%')).all()
+
+        return jsonify({
+            'questions': [
+                question.format() for question in questions
+            ],
+            'total_questions': len(questions)
+        }), 200
 
     '''
-    @TODO: 
+    @TODO DONE: 
     Create a GET endpoint to get questions based on category. 
 
     TEST: In the "List" tab / main screen, clicking on one of the 
     categories in the left column will cause only questions of that 
     category to be shown. 
     '''
+    @app.route('/categories/<int:category_id>/questions')
+    def get_category_questions(category_id):
+        category = Category.query.filter(Category.id == category_id).one_or_none()
+        
+        if category is None:
+            abort(404)
+        
+        questions = Question.query.filter(Question.category == str(category_id)) \
+            .order_by(Question.difficulty.desc()).all()
+        
+        questions_paginated = paginated_objects(request, questions)
 
+        return jsonify({
+            'questions': [
+                question.format() for question in questions_paginated
+            ],
+            'total_questions': len(questions),
+            'current_category': category.type
+        }), 200
 
     '''
     @TODO: 
@@ -103,6 +225,24 @@ def create_app(config='flaskr.config'):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not. 
     '''
+    @app.route('/quizzes', methods=['POST'])
+    def play_quiz():
+        body = request.get_json()
+        previous_questions_ids = body.get('previous_questions', None)
+        quiz_category_id = str(body.get('quiz_category', None))
+
+        question = Question.query \
+            .filter(Question.id.notin_(previous_questions_ids)) \
+            .filter(Question.category == str(quiz_category_id)) \
+            .first()
+        
+        if not question:
+            return jsonify({}), 200
+        
+        return jsonify({
+            'question': question.format()
+        }), 200
+
 
     '''
     @TODO: 
