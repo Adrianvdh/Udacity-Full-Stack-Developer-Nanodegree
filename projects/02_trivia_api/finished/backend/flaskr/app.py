@@ -35,10 +35,6 @@ def create_app(config='flaskr.config'):
         response.headers.add('Access-Control-Allow-Methods', 'GET,PATCH,POST,DELETE,OPTIONS')
         return response
 
-    @app.route('/')
-    def index():
-        return 'Hello world'
-    
     '''
     @TODO DONE: 
     Create an endpoint to handle GET requests 
@@ -81,8 +77,8 @@ def create_app(config='flaskr.config'):
             ],
             'total_questions': len(questions),
             'categories': [
-                cat.type for cat in categories
-            ],
+                { 'id': cat.id, 'type': cat.type } for cat in categories
+            ]
         }), 200
 
     '''
@@ -97,7 +93,7 @@ def create_app(config='flaskr.config'):
         question = Question.query.filter(Question.id == question_id).one_or_none()
 
         if question is None:
-            abort(404)
+            abort(404, 'Question not found!')
         
         question.delete()
         
@@ -137,9 +133,7 @@ def create_app(config='flaskr.config'):
             errors.append({'difficulty': 'Difficulty field cannot be blank!'})
         
         if len(errors) > 0:
-            return jsonify({
-                'errors': errors
-            }), 400
+            abort(400, errors)
         
         try:
             question = Question(
@@ -199,7 +193,7 @@ def create_app(config='flaskr.config'):
         category = Category.query.filter(Category.id == category_id).one_or_none()
         
         if category is None:
-            abort(404)
+            abort(404, 'Category not found!')
         
         questions = Question.query.filter(Question.category == str(category_id)) \
             .order_by(Question.difficulty.desc()).all()
@@ -249,5 +243,44 @@ def create_app(config='flaskr.config'):
     Create error handlers for all expected errors 
     including 404 and 422. 
     '''
+    @app.errorhandler(400)
+    def bad_request(error):
+        return jsonify({
+            'success': False,
+            'error': '400 Bad Request',
+            'message': error.description
+        }), 400
+    
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({
+            'success': False,
+            'error': '404 Not Found',
+            'message': str(error.description)
+        }), 404
+    
+    @app.errorhandler(405)
+    def method_not_allowed(error):
+        return jsonify({
+            'success': False,
+            'error': '405 Method Not Allowed',
+            'message': str(error.description)
+        }), 405
+
+    @app.errorhandler(422)
+    def unproccessable(error):
+        return jsonify({
+            'success': False,
+            'error': '422 Unproccessable',
+            'message': str(error.description)
+        }), 422
+
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        return jsonify({
+            'success': False,
+            'error': '500 Internal Server Error',
+            'message': error.description
+        }), 400
     
     return app, db

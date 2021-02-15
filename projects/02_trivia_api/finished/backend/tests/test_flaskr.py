@@ -50,11 +50,16 @@ class TriviaTestCase(unittest.TestCase):
     TODO
     Write at least one test for each test for successful operation and for expected errors.
     """
-    def test_hello_world(self):
-        res = self.client().get('/')
+    def test_method_not_allowed(self):
+        res = self.client().delete('/questions')
 
-        assert res.status_code == 200
-        assert res.data == b'Hello world'
+        assert res.status_code == 405
+        data = json.loads(res.data)
+        assert data == {
+            'success': False,
+            'error': '405 Method Not Allowed',
+            'message': 'The method is not allowed for the requested URL.'
+        }
 
     def test_get_categories(self):
         """
@@ -137,6 +142,17 @@ class TriviaTestCase(unittest.TestCase):
             'current_category': category.type
         }
     
+    def test_get_category_questions_not_found(self):
+        res = self.client().get('/categories/123456/questions')
+
+        assert res.status_code == 404
+        data = json.loads(res.data)
+        assert data == {
+            'success': False,
+            'error': '404 Not Found',
+            'message': 'Category not found!'
+        }
+    
     def test_questions_search(self):
         question1 = Question(question='How long is a mile in kilometers?',
                              answer='Answer',
@@ -176,6 +192,17 @@ class TriviaTestCase(unittest.TestCase):
             'deleted': question.id
         }
     
+    def test_delete_question_by_id_not_found(self):
+        res = self.client().delete('/questions/123456')
+
+        assert res.status_code == 404
+        data = json.loads(res.data)
+        assert data == {
+            'success': False,
+            'error': '404 Not Found',
+            'message': 'Question not found!'
+        }
+    
     def test_create_question(self):
         some_category = Category(type='Some Category')
         some_category.insert()
@@ -206,12 +233,17 @@ class TriviaTestCase(unittest.TestCase):
 
         assert res.status_code == 400
         data = json.loads(res.data)
-        assert data['errors'] == [
-            {'question': 'Question field cannot be blank!'},
-            {'answer': 'Answer field cannot be blank!'},
-            {'category': 'Category field cannot be blank!'},
-            {'difficulty': 'Difficulty field cannot be blank!'}
-        ]
+        print(data)
+        assert data == {
+            'success': False,
+            'error': '400 Bad Request',
+            'message': [
+                {'question': 'Question field cannot be blank!'},
+                {'answer': 'Answer field cannot be blank!'},
+                {'category': 'Category field cannot be blank!'},
+                {'difficulty': 'Difficulty field cannot be blank!'}
+            ]
+        }
         
     def test_play_quiz(self):
         questions_list1, category1 = create_questions(self.db, count=5)
@@ -247,4 +279,3 @@ class TriviaTestCase(unittest.TestCase):
         assert res.status_code == 200
         data = json.loads(res.data)
         assert not data.get('question')
-    
