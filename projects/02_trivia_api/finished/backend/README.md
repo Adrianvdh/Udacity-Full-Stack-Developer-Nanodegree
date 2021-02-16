@@ -33,7 +33,8 @@ This will install all of the required packages we selected within the `requireme
 ## Database Setup
 With Postgres running, restore a database using the trivia.psql file provided. From the backend folder in terminal run:
 ```bash
-psql trivia < trivia.psql
+createdb udacity_trivia
+psql udacity_trivia < trivia.psql
 ```
 
 ## Running the server
@@ -68,12 +69,10 @@ One note before you delve into your tasks: for each endpoint you are expected to
 
 
 ## Testing
-To run the tests, run
+To run the automated tests, run
 ```
-dropdb trivia_test
-createdb trivia_test
-psql trivia_test < trivia.psql
-python test_flaskr.py
+createdb udacity_trivia_test
+pytest
 ```
 
 # API Documentation

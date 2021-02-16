@@ -47,7 +47,7 @@ class TriviaTestCase(unittest.TestCase):
         self.db.session.commit()
 
     """
-    TODO
+    TODO DONE
     Write at least one test for each test for successful operation and for expected errors.
     """
     def test_method_not_allowed(self):
@@ -99,7 +99,7 @@ class TriviaTestCase(unittest.TestCase):
             ],
             'total_questions': len(questions_list),
             'categories': [
-                cat.type for cat in categories
+                { 'id': cat.id, 'type': cat.type } for cat in categories
             ]
         }
 
@@ -121,7 +121,7 @@ class TriviaTestCase(unittest.TestCase):
             ],
             'total_questions': len(questions_list),
             'categories': [
-                cat.type for cat in categories
+                { 'id': cat.id, 'type': cat.type } for cat in categories
             ]
         }
     
