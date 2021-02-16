@@ -280,7 +280,7 @@ def create_app(config='flaskr.config'):
         return jsonify({
             'success': False,
             'error': '500 Internal Server Error',
-            'message': error.description
-        }), 400
+            'message': str(error.description)
+        }), 500
     
     return app, db
