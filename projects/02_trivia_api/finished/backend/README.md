@@ -121,9 +121,8 @@ Get paginated questions and categories.
 
 - Returns a list of questions and categories used as the initial game play data.
 - The questions list is paginated in pages of 10 questions. Include a request argument to choose the page number starting from 1.
-
 - Request arguments:
-    - OPTIONAL int `page`. 10 questions per page, the default starts at 1 this argument isn't provided.
+    - OPTIONAL int `page` number. 10 questions per page, the default starts at 1 this argument isn't provided.
 - Response body:
     - List of dict values each representing a question object.
         - int `id`
@@ -248,7 +247,8 @@ Creates a new question using the submitted question, answer, category and diffic
 `$ curl http://127.0.0.1:5000/questions -X POST -H "Content-Type: application/json" -d '{"question": "Your question", "answer": "Your answer", "category": "1", "difficulty": "3"}'`
 
 - Returns a dict representing the newly created question.
-
+- Request arguments:
+    - No request arguments needed.
 - Request body:
     - dict representing new question values.
         - int `id`
@@ -295,7 +295,8 @@ Deletes an existing question by the qustion id.
 `$ curl http://127.0.0.1:5000/questions/1 -X DELETE`
 
 - Returns a dict representing the newly created question.
-
+- Request arguments:
+    - No request arguments needed.
 - Response body:
     - dict representing new question values.
         - int `deleted` question id.
@@ -317,10 +318,8 @@ Search question objects whose question attribute matches the search term.
 `$ curl http:127.0.0.1:5000/questions/search`
 
 - Returns a list of questions matching the search results.
-
 - Request arguments:
     - No request arguments needed.
-
 - Request body:
     - search term used for matching questions.
         - str `searchTerm`
@@ -368,7 +367,6 @@ Get all categories.
     - No request arguments needed.
 - Request body:
     - No request body needed.
-
 - Response body:
     - List of string values each representing a category object.
     - bool `success`
@@ -397,12 +395,10 @@ Get a list of questions for a category.
 `$ curl http://localhost:3000/categories/1/questions`
 
 - Returns a list of categories used to display to the user before playing the game.
-
 - Request arguments:
     - No request arguments needed.
 - Request body:
     - No request body needed.
-
 - Response body:
     - str `current_category` is the category that was selected.
     - List of dict values each representing a question object belonging to the category.
@@ -464,13 +460,11 @@ During of the game. Second question. Exclude the first question.
 `$ curl http://127.0.0.1:5000/quizzes -X POST -H "Content-Type: application/json" -d '{"previous_questions": [21], "quiz_category": "2"}'`
 
 - Returns dict representing a question object to show the user.
-
 - Request arguments:
     - No request arguments needed.
 - Request body:
     - array `previous_questions` are the question `id`'s of previously answered questions.
     - int `quiz_category` to only return questions in a category.
-
 - Response body:
     - dict representing the new question object.
         - int `id`
