@@ -156,12 +156,12 @@ git push -u origin master
 
 3. **Initialize and activate a virtualenv using:**
 ```
-python -m virtualenv env
-source env/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 ```
->**Note** - In Windows, the `env` does not have a `bin` directory. Therefore, you'd use the analogous command shown below:
+>**Note** - In Windows, the `venv` does not have a `bin` directory. Therefore, you'd use the analogous command shown below:
 ```
-source env/Scripts/activate
+source venv/Scripts/activate
 ```
 
 4. **Install the dependencies:**
@@ -171,9 +171,11 @@ pip install -r requirements.txt
 
 5. **Run the development server:**
 ```
-export FLASK_APP=myapp
+export FLASK_APP=fyyur
 export FLASK_ENV=development # enables debug mode
-python3 app.py
+pip install -e .
+flask db upgrade
+flask run
 ```
 
 6. **Verify on the Browser**<br>
