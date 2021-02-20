@@ -44,6 +44,7 @@ From within the `backend` directory first ensure you are working using your crea
 To run the server, execute:
 
 ```bash
+source .env
 export FLASK_APP=flaskr
 export FLASK_ENV=development
 flask run
@@ -72,6 +73,7 @@ One note before you delve into your tasks: for each endpoint you are expected to
 To run the automated tests, run
 ```
 createdb udacity_trivia_test
+source .env-test
 pytest
 ```
 

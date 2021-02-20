@@ -217,7 +217,7 @@ def create_app(config='flaskr.config'):  # noqa
             'question': question.format()
         }), 200
 
-    # TODO: Create error handlers for all expected errors including 404 and 422.
+    # TODO DONE: Create error handlers for all expected errors including 404 and 422.
     @app.errorhandler(400)
     def bad_request(error):
         return jsonify({
