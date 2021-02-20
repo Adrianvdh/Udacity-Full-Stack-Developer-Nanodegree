@@ -6,11 +6,9 @@ from .models import setup_db, Question, Category
 QUESTIONS_PER_PAGE = 10
 
 
-def paginated_objects(request, objects_list):
+def paginated_objects(request, query):
     page = request.args.get('page', default=1, type=int)
-    start = (page - 1) * QUESTIONS_PER_PAGE
-    end = start + QUESTIONS_PER_PAGE
-    return objects_list[start:end]
+    return query.paginate(page=page, per_page=QUESTIONS_PER_PAGE).items
 
 
 def create_app(config='flaskr.config'):  # noqa
@@ -54,16 +52,15 @@ def create_app(config='flaskr.config'):  # noqa
 
     @app.route('/questions')
     def get_questions():
-        questions = Question.query.order_by(Question.difficulty.desc()).all()
+        questions = Question.query.order_by(Question.difficulty.desc())
         categories = Category.query.order_by(Category.type).all()
-
         questions_paginated = paginated_objects(request, questions)
 
         return jsonify({
             'questions': [
                 question.format() for question in questions_paginated
             ],
-            'total_questions': len(questions),
+            'total_questions': questions.count(),
             'categories': [
                 {'id': cat.id, 'type': cat.type} for cat in categories
             ]
@@ -177,8 +174,9 @@ def create_app(config='flaskr.config'):  # noqa
         if category is None:
             abort(404, 'Category not found!')
 
-        questions = Question.query.filter(Question.category == str(category_id)) \
-            .order_by(Question.difficulty.desc()).all()
+        questions = Question.query \
+            .filter(Question.category == str(category_id)) \
+            .order_by(Question.difficulty.desc())
 
         questions_paginated = paginated_objects(request, questions)
 
@@ -186,7 +184,7 @@ def create_app(config='flaskr.config'):  # noqa
             'questions': [
                 question.format() for question in questions_paginated
             ],
-            'total_questions': len(questions),
+            'total_questions': questions.count(),
             'current_category': category.type
         }), 200
 

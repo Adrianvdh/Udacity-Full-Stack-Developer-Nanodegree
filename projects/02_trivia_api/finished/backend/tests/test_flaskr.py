@@ -140,6 +140,23 @@ class TriviaTestCase(unittest.TestCase):
             'current_category': category.type
         }
 
+    def test_get_category_questions_paginated_next_page(self):
+        questions_list, category = create_questions(self.db, count=12)
+
+        res = self.client().get(f'/categories/{category.id}/questions')
+
+        assert res.status_code == 200
+
+        data = json.loads(res.data)
+        assert len(data['questions']) == 10  # page limit
+        assert data == {
+            'questions': [
+                question.format() for question in questions_list[:10]
+            ],
+            'total_questions': len(questions_list),
+            'current_category': category.type
+        }
+
     def test_get_category_questions_not_found(self):
         res = self.client().get('/categories/123456/questions')
 
