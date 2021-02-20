@@ -1,11 +1,8 @@
-import os
 import unittest
 import json
-from flask_sqlalchemy import SQLAlchemy
 
-from typing import List
 from flaskr import create_app
-from flaskr.models import setup_db, Question, Category, db
+from flaskr.models import Question, Category
 
 
 def create_categories(db):
@@ -17,10 +14,11 @@ def create_categories(db):
     sports.insert()
     return [animals, pop_culture, sports]
 
+
 def create_questions(db, count=12):
     some_category = Category(type='Some Category')
     some_category.insert()
-    
+
     questions = []
     for index in range(count):
         question = Question(
@@ -28,7 +26,7 @@ def create_questions(db, count=12):
             category=some_category.id, difficulty=5
         )
         question.insert()
-        questions.append(question)    
+        questions.append(question)
     return questions, some_category
 
 
@@ -39,7 +37,7 @@ class TriviaTestCase(unittest.TestCase):
         """Define test variables and initialize app."""
         self.app, self.db = create_app('tests.config')
         self.client = self.app.test_client
-    
+
     def tearDown(self):
         """Executed after reach test"""
         self.db.session.query(Category).delete()
@@ -68,9 +66,9 @@ class TriviaTestCase(unittest.TestCase):
         request was a `success` or failure.
         """
         categories = create_categories(self.db)
-        
+
         res = self.client().get('/categories')
-        
+
         assert res.status_code == 200
         data = json.loads(res.data)
         assert data == {
@@ -99,7 +97,7 @@ class TriviaTestCase(unittest.TestCase):
             ],
             'total_questions': len(questions_list),
             'categories': [
-                { 'id': cat.id, 'type': cat.type } for cat in categories
+                {'id': cat.id, 'type': cat.type} for cat in categories
             ]
         }
 
@@ -121,10 +119,10 @@ class TriviaTestCase(unittest.TestCase):
             ],
             'total_questions': len(questions_list),
             'categories': [
-                { 'id': cat.id, 'type': cat.type } for cat in categories
+                {'id': cat.id, 'type': cat.type} for cat in categories
             ]
         }
-    
+
     def test_get_category_questions(self):
         questions_list, category = create_questions(self.db, count=12)
 
@@ -141,7 +139,7 @@ class TriviaTestCase(unittest.TestCase):
             'total_questions': len(questions_list),
             'current_category': category.type
         }
-    
+
     def test_get_category_questions_not_found(self):
         res = self.client().get('/categories/123456/questions')
 
@@ -152,7 +150,7 @@ class TriviaTestCase(unittest.TestCase):
             'error': '404 Not Found',
             'message': 'Category not found!'
         }
-    
+
     def test_questions_search(self):
         question1 = Question(question='How long is a mile in kilometers?',
                              answer='Answer',
@@ -191,7 +189,7 @@ class TriviaTestCase(unittest.TestCase):
             'success': True,
             'deleted': question.id
         }
-    
+
     def test_delete_question_by_id_not_found(self):
         res = self.client().delete('/questions/123456')
 
@@ -202,7 +200,7 @@ class TriviaTestCase(unittest.TestCase):
             'error': '404 Not Found',
             'message': 'Question not found!'
         }
-    
+
     def test_create_question(self):
         some_category = Category(type='Some Category')
         some_category.insert()
@@ -222,7 +220,7 @@ class TriviaTestCase(unittest.TestCase):
         assert created_question.answer == data['answer']
         assert created_question.category == data['category']
         assert created_question.difficulty == data['difficulty']
-        
+
     def test_create_question_with_errors(self):
         res = self.client().post('/questions', json={
             'question': '',
@@ -244,11 +242,11 @@ class TriviaTestCase(unittest.TestCase):
                 {'difficulty': 'Difficulty field cannot be blank!'}
             ]
         }
-        
+
     def test_play_quiz(self):
         questions_list1, category1 = create_questions(self.db, count=5)
         questions_list2, category2 = create_questions(self.db, count=5)
-        
+
         res = self.client().post('/quizzes', json={
             'previous_questions': [
                 questions_list2[0].id,
@@ -264,10 +262,10 @@ class TriviaTestCase(unittest.TestCase):
 
         question = questions_list2[2].format()
         assert data['question'] == question
-    
+
     def test_play_quiz_finish(self):
         questions_list, category = create_questions(self.db, count=2)
-        
+
         res = self.client().post('/quizzes', json={
             'previous_questions': [
                 questions_list[0].id,
