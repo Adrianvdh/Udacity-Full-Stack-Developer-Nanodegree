@@ -1,15 +1,26 @@
-from flask import Flask, request, abort
+from flask import Flask, request, abort, jsonify
 import json
 from functools import wraps
 from jose import jwt
 from urllib.request import urlopen
 
 
+
+"""
+https://fsnd-adrian.eu.auth0.com/authorize?
+  audience=image&
+  response_type=token&
+  client_id=yZFOQaarZBlbhvDlvAyCthn4ryoLEZe1&
+  redirect_uri=https://127.0.0.1:8080/login-results
+"""
+
+
+
 app = Flask(__name__)
 
-AUTH0_DOMAIN = @TODO_REPLACE_WITH_YOUR_DOMAIN
+AUTH0_DOMAIN = 'fsnd-adrian.eu.auth0.com'
 ALGORITHMS = ['RS256']
-API_AUDIENCE = @TODO_REPLACE_WITH_YOUR_API_AUDIENCE
+API_AUDIENCE = 'image'
 
 
 class AuthError(Exception):
@@ -104,21 +115,51 @@ def verify_decode_jwt(token):
                 'description': 'Unable to find the appropriate key.'
             }, 400)
 
+def check_permissions(permission, payload):
+    if 'permissions' not in payload:
+        raise AuthError({
+            'code': 'invalid_claims',
+            'description': 'Permissions not included in JWT.'
+        }, 400)
+    
+    if permission not in payload['permissions']:
+        raise AuthError({
+            'code': 'unauthorized',
+            'description': 'Permission not found.'
+        }, 403)
+    
+    return True
 
-def requires_auth(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        token = get_token_auth_header()
-        try:
-            payload = verify_decode_jwt(token)
-        except:
-            abort(401)
-        return f(payload, *args, **kwargs)
+def requires_auth(permission=''):
+    def requires_auth_decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            token = get_token_auth_header()
+            try:
+                payload = verify_decode_jwt(token)
+            except:
+                abort(401)
+            
+            check_permissions(permission, payload)
 
-    return wrapper
+            return f(payload, *args, **kwargs)
+
+        return wrapper
+    return requires_auth_decorator
 
 @app.route('/headers')
 @requires_auth
 def headers(payload):
     print(payload)
     return 'Access Granted'
+
+@app.route('/images')
+@requires_auth(permission='get:images')
+def images(jwt):
+    print(jwt)
+    return 'Images Endpoint'
+
+
+@app.errorhandler(AuthError)
+def handle_bad_request(exception):
+    return jsonify(exception.error), exception.status_code
