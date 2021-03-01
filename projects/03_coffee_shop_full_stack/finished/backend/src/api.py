@@ -1,11 +1,9 @@
-import os
 import json
+
 from flask import Flask, request, jsonify, abort
-from sqlalchemy import exc
-import json
 from flask_cors import CORS
 
-from .database.models import db_drop_and_create_all, setup_db, Drink
+from .database.models import db_drop_and_create_all, setup_db, Drink  # noqa
 from .auth.auth import AuthError, requires_auth
 
 app = Flask(__name__)
@@ -18,9 +16,9 @@ CORS(app)
 !! NOTE THIS WILL DROP ALL RECORDS AND START YOUR DB FROM SCRATCH
 !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
 '''
-# db_drop_and_create_all()
+# db_drop_and_create_all() # noqa
 
-## ROUTES
+# ROUTES
 '''
 @TODO DONE implement endpoint
     GET /drinks
@@ -29,6 +27,8 @@ CORS(app)
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
+
+
 @app.route('/drinks')
 def get_drinks():
     drinks = Drink.query.all()
@@ -47,6 +47,8 @@ def get_drinks():
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
+
+
 @app.route('/drinks-detail')
 @requires_auth(permission='get:drinks-detail')
 def get_drinks_detail(jwt):
@@ -70,28 +72,29 @@ def validate_drink_request(title, recipe):
     if not title:
         errors.append({'title': 'Title field cannot be blank!'})
     if not recipe:
-        errors.append({'recipe': 'Recipe field cannot be blank!'})    
-    
+        errors.append({'recipe': 'Recipe field cannot be blank!'})
+
     for index, r in enumerate(recipe):
         color = r.get('color', None)
         if not color:
             errors.append({'missing_field': f'The recipe list object at index {index} is missing the color property!'})
         if color and not type(color) is str:
             errors.append({'incorrect_type': f'The recipe list object index {index} color property must be a string!'})
-        
+
         name = r.get('name', None)
         if not name:
             errors.append({'missing_field': f'The recipe list object at index {index} is missing the name property!'})
         if not type(name) is str:
             errors.append({'incorrect_type': f'The recipe list object index {index} name property must be a string!'})
-        
+
         parts = r.get('parts', None)
         if not parts:
             errors.append({'missing_field': f'The recipe list object at index {index} is missing the parts property!'})
         if not type(parts) is int:
             errors.append({'incorrect_type': f'The recipe list object index {index} parts property must be a number!'})
-    
+
     return errors
+
 
 '''
 @TODO DONE implement endpoint
@@ -102,6 +105,8 @@ def validate_drink_request(title, recipe):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
         or appropriate status code indicating reason for failure
 '''
+
+
 @app.route('/drinks', methods=['POST'])
 @requires_auth(permission='post:drinks')
 def create_drink(jwt):
@@ -111,7 +116,7 @@ def create_drink(jwt):
 
     title = body.get('title', None)
     recipe = body.get('recipe', None)
-    
+
     errors = validate_drink_request(title, recipe)
 
     if len(errors) > 0:
@@ -128,6 +133,7 @@ def create_drink(jwt):
     except Exception as e:
         abort(500, e)
 
+
 '''
 @TODO DONE implement endpoint
     PATCH /drinks/<id>
@@ -139,6 +145,8 @@ def create_drink(jwt):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
         or appropriate status code indicating reason for failure
 '''
+
+
 @app.route('/drinks/<drink_id>', methods=['PATCH'])
 @requires_auth(permission='patch:drinks')
 def update_drink(jwt, drink_id):
@@ -149,7 +157,7 @@ def update_drink(jwt, drink_id):
     body = request.get_json()
     if not body:
         abort(400)
-    
+
     title = body.get('title', None)
     recipe = body.get('recipe', None)
 
@@ -181,6 +189,8 @@ def update_drink(jwt, drink_id):
     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
+
+
 @app.route('/drinks/<drink_id>', methods=['DELETE'])
 @requires_auth(permission='delete:drinks')
 def delete_drinks(jwt, drink_id):
@@ -188,10 +198,10 @@ def delete_drinks(jwt, drink_id):
 
     if drink is None:
         abort(404, 'Drink is not found!')
-    
+
     try:
         drink.delete()
-    except:
+    except Exception:
         abort(422, 'Could not delete drink!')
 
     return jsonify({
@@ -200,17 +210,19 @@ def delete_drinks(jwt, drink_id):
     }), 200
 
 
-## Error Handling
+# Error Handling
 '''
 @TODO DONE implement error handlers using the @app.errorhandler(error) decorator
     each error handler should return (with approprate messages):
              jsonify({
-                    "success": False, 
+                    "success": False,
                     "error": 404,
                     "message": "resource not found"
                     }), 404
 
 '''
+
+
 @app.errorhandler(400)
 def bad_request(error):
     return jsonify({
@@ -219,10 +231,13 @@ def bad_request(error):
         'message': error.description
     }), 400
 
+
 '''
 @TODO DONE implement error handler for 404
-    error handler should conform to general task above 
+    error handler should conform to general task above
 '''
+
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({
@@ -230,6 +245,7 @@ def not_found(error):
         'error': '404 Not Found',
         'message': str(error.description)
     }), 404
+
 
 @app.errorhandler(405)
 def method_not_allowed(error):
@@ -239,6 +255,7 @@ def method_not_allowed(error):
         'message': str(error.description)
     }), 405
 
+
 @app.errorhandler(422)
 def unproccessable(error):
     return jsonify({
@@ -246,6 +263,7 @@ def unproccessable(error):
         'error': '422 Unproccessable',
         'message': str(error.description)
     }), 422
+
 
 @app.errorhandler(500)
 def internal_server_error(error):
@@ -255,10 +273,13 @@ def internal_server_error(error):
         'message': str(error.description)
     }), 500
 
+
 '''
 @TODO DONE implement error handler for AuthError
-    error handler should conform to general task above 
+    error handler should conform to general task above
 '''
+
+
 @app.errorhandler(AuthError)
 def handle_bad_request(exception):
     return jsonify(exception.error), exception.status_code
